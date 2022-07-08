@@ -1,0 +1,53 @@
+import IO from "IO"
+
+import {colortrace, ansiColor, text} from "./Log"
+import {NPC, Command, EventAction} from "./Types"
+import {getActionName} from "./Action"
+import { canDo, toSpirit} from "./Character"
+import {makeTwister} from "./Unusual"
+import type {Unusual} from "./Unusual"
+import {renderDungeon, defaultConfig, makeDungeonFromSeed} from "./Dungeon"
+import {madListToJSArray} from "./Extern"
+
+
+import {} from "./Math"
+
+red = colortrace(text.red)
+cyan = colortrace(text.cyan)
+yellow= colortrace(text.yellow)
+
+sleep = Command(1, "sleep", EventAction("sleep"))
+run = Command(2, "run", EventAction("run"))
+jimmy = NPC("jimmy", {actions: [sleep, run]})
+
+u = makeTwister("cooool")
+
+red("jimmy - an NPC", jimmy)
+red("jimmy - spirit?", toSpirit(jimmy))
+red("jimmy - can sleep?", canDo("sleep", jimmy))
+red("jimmy - can sleep2?", canDo(getActionName(sleep), jimmy))
+red("jimmy - can run?", canDo("run", jimmy))
+red("jimmy - can gallop?", canDo("gallop", jimmy))
+cyan("unusual - do you like, to do the twist?", u.shuffle(["alpha", "beta", "gamma"]))
+cyan("unusual - do you like, to do the twist?", u.shuffle(["alpha", "beta", "gamma"]) |> u.shuffle |> u.shuffle)
+cyan("unusual - do you like, to do the twist?", u.pick(["one", "two", "three", "four", "five", "six"]))
+
+
+i = u.integer({min: 0, max: 200})
+cyan("i - what?", i)
+
+origin :: Integer -> Integer -> #[Integer, Integer]
+origin = (w, h) => #[
+  u.integer({min: 0, max: w}),
+  u.integer({min: 0, max: h})
+]
+
+WIDTH = 20
+HEIGHT = 20
+
+start = origin(WIDTH, HEIGHT)
+yellow("origin - where?", start)
+
+dungeon = makeDungeonFromSeed("dopescience-coolpants")
+red("dungeon - huh", dungeon)
+#- console.log(renderDungeon(dungeon)) -#

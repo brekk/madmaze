@@ -1,0 +1,61 @@
+import IO from "IO"
+import {find, length} from "List"
+import {lt} from "Compare"
+import {Just, Nothing} from "Maybe"
+
+import type {Character, Entity, UID, Action, StandardAction, Event, Actionable } from "./Types"
+import { Space, InvalidAction, Command, NPC, Spirit, Player } from "./Types"
+
+transform :: (id -> soul -> a) -> Character id soul -> a
+transform = (fn) => (
+  where {
+    Player(name, soul) => fn(name, soul)
+    NPC(name, soul) => fn(name, soul)
+    Spirit(name, soul) => fn(name, soul)
+  }
+)
+
+toNPC :: Character id soul -> Character id soul
+export toNPC = (
+  where {
+    Player(name, soul) => NPC(name, soul)
+    Spirit(name, soul) => NPC(name, soul)
+  }
+)
+
+toSpirit :: Character id soul -> Character id soul
+export toSpirit = (
+  where {
+    Player(name, soul) => Spirit(name, soul)
+    NPC(name, soul) => Spirit(name, soul)
+  }
+)
+
+toPlayer :: Character id soul -> Character id soul
+export toPlayer = (
+  where {
+    Spirit(name, soul) => Player(name, soul)
+    NPC(name, soul) => Player(name, soul)
+  }
+)
+
+canDoLogic :: String -> List (StandardAction a) -> Boolean
+canDoLogic = (actionName, actions) => pipe(
+  find((a) => (
+    where {
+      Command(id, name, e) => name == actionName
+      InvalidAction(id, name) => name == actionName
+    }
+  )(a)),
+  where {
+    Just(x) => true
+    Nothing => false
+  }
+)(actions)
+
+canDo :: String -> Character String (Actionable a) -> Boolean
+export canDo = (actionName, character) => (
+  transform(
+    (name, soul) => canDoLogic(actionName, soul.actions) 
+  )
+)(character)

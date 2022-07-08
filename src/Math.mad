@@ -1,0 +1,11 @@
+floor :: a -> a
+export floor = (x) => #- Math.floor(x) -#
+
+min :: a -> a -> a 
+export min = (a, b) => #- Math.min(a, b) -#
+
+max :: a -> a -> a 
+export max = (a, b) => #- Math.max(a, b) -#
+
+abs :: a -> a
+export abs = (a) => #- Math.abs(a) -#

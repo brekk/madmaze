@@ -1,0 +1,32 @@
+madListToJSArray :: a -> b
+export madListToJSArray = (a) => #- {
+  let list = a
+  let n, v
+  const out = []
+  while (list) {
+    n = list.n
+    v = list.v
+    out.push(v)
+    list = list.n
+  }
+  return out
+} -#
+
+jsArrayToMadList :: a -> b
+export jsArrayToMadList = (a) => #- {
+  let out, v
+  let list = a
+  const len = list.length
+  let i = list.length - 1
+  let n = null
+  while (i > -1) {
+    let m = n
+    out = {
+      v: list[i],
+      n: m
+    }
+    n = out
+    i--
+  }
+  return out
+} -#

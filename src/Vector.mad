@@ -1,0 +1,23 @@
+import {fst, snd} from "Tuple"
+export type Vector x y = Vector(x, y)
+
+export alias CartesianVector = Vector Integer Integer
+
+fromTuple :: #[Integer, Integer] -> CartesianVector
+export fromTuple = (xy) => Vector(fst(xy), snd(xy))
+
+toTuple :: Vector x y -> #[x, y]
+export toTuple = where {
+  Vector(x, y) => #[x, y]
+}
+
+add :: CartesianVector -> CartesianVector -> CartesianVector
+export add = (a, b) => {
+  m = toTuple(a)
+  mx = fst(m)
+  my = snd(m)
+  n = toTuple(b)
+  nx = fst(n)
+  ny = snd(n)
+  return Vector(mx + nx, ny + ny)
+}

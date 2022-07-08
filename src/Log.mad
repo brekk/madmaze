@@ -1,0 +1,133 @@
+import {} from "Show"
+import IO from "IO"
+import {mapWithIndex} from "List"
+import {equals, when} from "Function"
+import {split, join} from "String"
+
+END_COLOR = "\x1b[0m"
+
+colorize :: String -> String -> String
+export colorize = (color, v) => color ++ v ++ END_COLOR
+
+uncolorize :: String -> String
+export uncolorize = (v) => END_COLOR ++ v
+
+// via https://en.wikipedia.org/wiki/ANSI_escape_code
+
+export FGBlack = "30"
+export FGRed = "31"
+export FGGreen = "32"
+export FGYellow = "33"
+export FGBlue = "34"
+export FGMagenta = "35"
+export FGCyan = "36"
+export FGWhite = "37"
+
+export FGBrightBlack = "90"
+export FGBrightRed = "91"
+export FGBrightGreen = "92"
+export FGBrightYellow = "93"
+export FGBrightBlue = "94"
+export FGBrightMagenta = "95"
+export FGBrightCyan = "96"
+export FGBrightWhite = "97"
+
+export BGBlack = "40"
+export BGRed = "41"
+export BGGreen = "42"
+export BGYellow = "43"
+export BGBlue = "44"
+export BGMagenta = "45"
+export BGCyan = "46"
+export BGWhite = "47"
+
+export BGBrightBlack = "100"
+export BGBrightRed = "101"
+export BGBrightGreen = "102"
+export BGBrightYellow = "103"
+export BGBrightBlue = "104"
+export BGBrightMagenta = "105"
+export BGBrightCyan = "106"
+export BGBrightWhite = "107"
+
+export FormatUnderline = "4"
+export FormatNoUnderline = "24"
+export FormatBold = "1"
+export FormatNoBold = "21"
+
+export FormatInvert = "7"
+
+// export red = withColor("\x1b[31m")
+ansiColor :: List String -> String -> String
+export ansiColor = (parts, str) => colorize(
+  `\x1b[${join(";", parts)}m`,
+  str
+)
+
+export text = {
+  black: ansiColor([FGBlack]),
+  red: ansiColor([FGRed]),
+  green: ansiColor([FGGreen]),
+  yellow: ansiColor([FGYellow]),
+  blue: ansiColor([FGBlue]),
+  magenta: ansiColor([FGMagenta]),
+  cyan: ansiColor([FGCyan]),
+  white: ansiColor([FGWhite]),
+  brightBlack: ansiColor([FGBrightBlack]),
+  brightRed: ansiColor([FGBrightRed]),
+  brightGreen: ansiColor([FGBrightGreen]),
+  brightYellow: ansiColor([FGBrightYellow]),
+  brightBlue: ansiColor([FGBrightBlue]),
+  brightMagenta: ansiColor([FGBrightMagenta]),
+  brightCyan: ansiColor([FGBrightCyan]),
+  brightWhite: ansiColor([FGBrightWhite]),
+  underline: ansiColor([FormatUnderline]),
+  bold: ansiColor([FormatBold]),
+  boldUnderline: ansiColor([FormatBold, FormatUnderline]),
+}
+
+export dark = {
+  black: ansiColor([FGBlack, BGBlack]),
+  red: ansiColor([FGRed, BGBlack]),
+  green: ansiColor([FGGreen, BGBlack]),
+  yellow: ansiColor([FGYellow, BGBlack]),
+  blue: ansiColor([FGBlue, BGBlack]),
+  magenta: ansiColor([FGMagenta, BGBlack]),
+  cyan: ansiColor([FGCyan, BGBlack]),
+  white: ansiColor([FGWhite, BGBlack]),
+}
+
+export light = {
+  black: ansiColor([FGBrightBlack, BGWhite]),
+  red: ansiColor([FGBrightRed, BGWhite]),
+  green: ansiColor([FGBrightGreen, BGWhite]),
+  yellow: ansiColor([FGBrightYellow, BGWhite]),
+  blue: ansiColor([FGBrightBlue, BGWhite]),
+  magenta: ansiColor([FGBrightMagenta, BGWhite]),
+  cyan: ansiColor([FGBrightCyan, BGWhite]),
+  white: ansiColor([FGBrightWhite, BGWhite]),
+}
+
+prettyCase :: (String -> String) -> String -> String
+prettyCase = (fn, str) => pipe(
+  (x) => x ? x : "",
+  split(" "),
+  mapWithIndex((x, i) => when(
+    (_) => equals(i, 0),
+    fn
+  )(x)),
+  join(" "),
+  (x) => x ++ "\n\t"
+)(str)
+
+toString :: (a -> b) -> String
+toString = (fn) => #- fn.toString() -#
+
+colortrace :: Inspect a => (String -> String) -> String -> a -> a
+export colortrace = (fn, v, a) => {
+  // IO.log("fn", fn)
+  return IO.trace(
+    prettyCase(fn, v),
+    a
+  )
+}

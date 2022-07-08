@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "dungeoneer": "^2.1.5",
+    "unusual": "^0.0.2"
+  }
+}

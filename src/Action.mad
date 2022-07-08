@@ -1,0 +1,10 @@
+import type { Action } from "./Types"
+import { InvalidAction, Command } from "./Types"
+
+getActionName :: Action a b c -> b
+export getActionName = (
+  where {
+    Command(id, name, step) => name
+    InvalidAction(id, name) => name
+  }
+)

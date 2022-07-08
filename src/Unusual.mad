@@ -1,0 +1,49 @@
+import IO from "IO"
+import {madListToJSArray, jsArrayToMadList} from "./Extern"
+import {floatToInteger, integerToFloat} from "Number"
+
+#- import unusual from "unusual" -#
+
+alias MinMax = {
+  min :: Integer,
+  max :: Integer
+}
+
+export alias Unusual = {
+  integer :: MinMax -> Integer,
+  // since the `integer` function has a clumsy API
+  int :: Integer -> Integer -> Integer,
+  float :: Float -> Float -> Float,
+  pickKey :: a -> String,
+  pickValue :: a -> b,
+  floor :: Integer -> Integer,
+  floorMin :: Integer -> Integer -> Integer,
+
+  // chance in x == 1 ?
+  fate :: Integer -> Boolean,
+
+  // since Madlib doesn't support nullary functions, make this take Unit
+  random :: {} -> Float,
+  // These functions need some wrapping to deal with MadLists correctly
+  pick :: List a -> a,
+  shuffle :: List a -> List a
+}
+
+makeTwister :: a -> Unusual
+export makeTwister = (seed) => {
+  u :: Unusual
+  u = #- unusual(seed) -#
+  return {
+    ...u,
+    int: (min, max) => u.integer({min, max}),
+    float: (min, max) => integerToFloat(
+      u.integer({
+        min: floatToInteger(min),
+        max: floatToInteger(max)
+      })
+    ),
+    fate: (max) => u.integer({min: 1, max}) == 1,
+    pick: pipe(madListToJSArray, u.pick),
+    shuffle: pipe(madListToJSArray, u.shuffle, jsArrayToMadList)
+  }
+}
