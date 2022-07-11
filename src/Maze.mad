@@ -1,5 +1,5 @@
-import type {StandardRoom, BoundingBox} from "./Types"
-import {Room} from "./Types"
+import type {StandardRoom, BoundingBox} from "@/Types"
+import {Room} from "@/Types"
 
 getBoundingBox :: StandardRoom a -> BoundingBox
 export getBoundingBox = (

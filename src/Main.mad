@@ -1,16 +1,14 @@
 import IO from "IO"
 
-import {colortrace, ansiColor, text} from "./Log"
-import {NPC, Command, EventAction} from "./Types"
-import {getActionName} from "./Action"
-import { canDo, toSpirit} from "./Character"
-import {makeTwister} from "./Unusual"
-import type {Unusual} from "./Unusual"
-import {renderDungeon, defaultConfig, makeDungeonFromSeed} from "./Dungeon"
-import {madListToJSArray} from "./Extern"
-
-
-import {} from "./Math"
+import {colortrace, ansiColor, text} from "@/Log"
+import {NPC, Command, EventAction} from "@/Types"
+import {getActionName} from "@/Action"
+import { canDo, toSpirit} from "@/Character"
+import {makeTwister} from "@/Unusual"
+import type {Unusual} from "@/Unusual"
+import {renderDungeon, defaultConfig, makeDungeonFromSeed} from "@/Dungeon"
+import {madListToJSArray} from "@/Extern"
+import {} from "@/Math"
 
 red = colortrace(text.red)
 cyan = colortrace(text.cyan)

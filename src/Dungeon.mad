@@ -5,7 +5,6 @@ import type {Maybe} from "Maybe"
 import {Just, Nothing} from "Maybe"
 import {identity, ifElse, equals, when, always} from "Function"
 import {formatDecimal, floatToInteger, integerToFloat} from "Number"
-import {abs,min, max, floor} from "./Math"
 
 import type {
    DungeonRooms, StandardRoom,
@@ -13,12 +12,13 @@ import type {
    DungeonTiles, Tile, CartesianTile,
    TileNeighbors,
    RecordConfig, RecordSeededConfig
-} from "./Types"
-import {Room, Door, Wall, Hazard, Floor, Dungeon, InvalidTile} from "./Types"
-import {Vector} from "./Vector"
-import type {Unusual} from "./Unusual"
-import {makeTwister} from "./Unusual"
-import {roomIntersectsRoom, roomContainsTile} from "./Maze"
+} from "@/Types"
+import {Room, Door, Wall, Hazard, Floor, Dungeon, InvalidTile} from "@/Types"
+import {Vector} from "@/Vector"
+import type {Unusual} from "@/Unusual"
+import {makeTwister} from "@/Unusual"
+import {roomIntersectsRoom, roomContainsTile} from "@/Maze"
+import {abs,min, max, floor} from "@/Math"
 
 tileAt :: Integer -> Integer -> DungeonTiles t -> Maybe (Maybe (CartesianTile t))
 tileAt = (x, y, tiles) => pipe(
@@ -182,13 +182,15 @@ makeDungeonWithConfig = (conf) => {
       )(xs)
     )(height)
   )(width)
-  // neighbors = (
-  //   (i) => map(map(
-  //     where {
-  //       Wall(x, y, raw) => getNeighborsFromTiles(i, x, y)
-  //     }
-  //   ))(i)
-  // )(impassable)
+  /*
+  neighbors = (
+    (i) => map(map(
+      where {
+        Wall(x, y, raw) => getNeighborsFromTiles(i, x, y)
+      }
+    ))(i)
+  )(impassable)
+  */
   rooms = makeRooms(u, conf)
   filteredTiles = map(
     (room) => chain(filter(

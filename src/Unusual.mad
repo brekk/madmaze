@@ -1,6 +1,7 @@
 import IO from "IO"
-import {madListToJSArray, jsArrayToMadList} from "./Extern"
 import {floatToInteger, integerToFloat} from "Number"
+
+import {madListToJSArray, jsArrayToMadList} from "@/Extern"
 
 #- import unusual from "unusual" -#
 

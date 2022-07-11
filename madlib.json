@@ -1,5 +1,8 @@
 {
   "name": "madmaze",
   "version": "0.0.1",
-  "main": "src/Main.mad"
+  "main": "src/Main.mad",
+  "importAliases": {
+    ".": "src"
+  }
 }

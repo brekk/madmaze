@@ -1,11 +1,23 @@
-floor :: a -> a
+floor :: Integer -> Integer
 export floor = (x) => #- Math.floor(x) -#
 
-min :: a -> a -> a 
+floorFloat :: Float -> Float
+export floorFloat = (x) => #- Math.floor(x) -#
+
+min :: Integer -> Integer -> Integer
 export min = (a, b) => #- Math.min(a, b) -#
 
-max :: a -> a -> a 
+minFloat :: Float -> Float -> Float
+export minFloat = (a, b) => #- Math.min(a, b) -#
+
+max :: Integer -> Integer -> Integer
 export max = (a, b) => #- Math.max(a, b) -#
 
-abs :: a -> a
+maxFloat :: Float -> Float -> Float
+export maxFloat = (a, b) => #- Math.max(a, b) -#
+
+abs :: Integer -> Integer
 export abs = (a) => #- Math.abs(a) -#
+
+absFloat :: Float -> Float
+export absFloat = (a) => #- Math.abs(a) -#
