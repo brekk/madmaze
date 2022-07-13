@@ -1,0 +1,5 @@
+export type WorldError id
+  = ErrorMaze(id) 
+  | ErrorEntity(id)
+  | ErrorPlace(id)
+  | UnknownWorldError

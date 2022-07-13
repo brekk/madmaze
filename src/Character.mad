@@ -3,8 +3,15 @@ import {find, length} from "List"
 import {lt} from "Compare"
 import {Just, Nothing} from "Maybe"
 
-import type {Character, Entity, UID, Action, StandardAction, Event, Actionable } from "@/Types"
-import { Space, InvalidAction, Command, NPC, Spirit, Player } from "@/Types"
+import type {Action, StandardAction, Actionable} from "@/Action"
+import {InvalidAction, Command} from "@/Action"
+import type { Event } from "@/Event"
+
+export type Character name soul
+  = Player(name, soul)
+  | NPC(name, soul)
+  | Spirit(name, soul)
+  | UnknownCharacter
 
 transform :: (id -> soul -> a) -> Character id soul -> a
 transform = (fn) => (

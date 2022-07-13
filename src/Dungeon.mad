@@ -7,18 +7,33 @@ import {identity, ifElse, equals, when, always} from "Function"
 import {formatDecimal, floatToInteger, integerToFloat} from "Number"
 
 import type {
-   DungeonRooms, StandardRoom,
-   RecordDungeon, Dungeon, 
-   DungeonTiles, Tile, CartesianTile,
-   TileNeighbors,
    RecordConfig, RecordSeededConfig
-} from "@/Types"
-import {Room, Door, Wall, Hazard, Floor, Dungeon, InvalidTile} from "@/Types"
+} from "@/Config"
+
+import {roomIntersectsRoom, roomContainsTile} from "@/Maze"
+
+import {abs, min, max, floor} from "@/Math"
+
+import type { StandardRoom } from "@/Room"
+import {Room} from "@/Room"
+
+import type { Tile, CartesianTile, TileNeighbors } from "@/Tile"
+import {Door, Wall, Hazard, Floor, InvalidTile} from "@/Tile"
+
 import {Vector} from "@/Vector"
+
 import type {Unusual} from "@/Unusual"
 import {makeTwister} from "@/Unusual"
-import {roomIntersectsRoom, roomContainsTile} from "@/Maze"
-import {abs,min, max, floor} from "@/Math"
+
+export alias DungeonRooms r = List (StandardRoom r)
+export alias DungeonTiles t = List (List (CartesianTile t))
+
+export alias RecordDungeon r t = {
+  rooms :: DungeonRooms r,
+  tiles :: DungeonTiles t
+}
+
+export type Dungeon width height rooms tiles = Dungeon(width, height, rooms, tiles)
 
 tileAt :: Integer -> Integer -> DungeonTiles t -> Maybe (Maybe (CartesianTile t))
 tileAt = (x, y, tiles) => pipe(
@@ -106,6 +121,14 @@ remainder = (d, n) => {
 halfFloor :: Float -> Integer
 halfFloor = (y) => floatToInteger(y / 2)
 
+doubleRandomized :: Unusual -> Integer -> Integer
+doubleRandomized = (u, x) => pipe(
+  integerToFloat,
+  halfFloor,
+  u.int(0),
+  doubleAndOne
+)(x)
+
 makeRoom :: Unusual -> RecordSeededConfig -> Integer -> StandardRoom String
 makeRoom = (u, conf, _) => {
   maxW = max(conf.width - 4)
@@ -118,21 +141,15 @@ makeRoom = (u, conf, _) => {
   h = maxH(  widthOrHeight ? rectSize : size )
   w2 = abs(conf.width - w)
   h2 = abs(conf.height - h)
-  initialX = pipe(
-    integerToFloat,
-    halfFloor,
-    u.int(0),
-    doubleAndOne
-  )(w2)
-  initialY = pipe(
-    integerToFloat,
-    halfFloor,
-    u.int(0),
-    doubleAndOne
-  )(h2)
+  initialX = doubleRandomized(u, w2)
+  initialY = doubleRandomized(u, h2)
   // deal with overlaps
-  x = initialX + w > conf.width  ? max(1, w - conf.width - 1 ) : initialX 
-  y = initialY + h > conf.height ? max(1, h - conf.height - 1 ) : initialY
+  x = initialX + w > conf.width  ?
+      max( 1, w - conf.width - 1 ) :
+      initialX 
+  y = initialY + h > conf.height ?
+      max( 1, h - conf.height - 1 ) :
+      initialY
   room = Room(x, y, w2, h2, "obsidian")
   return room
 }
@@ -192,6 +209,7 @@ makeDungeonWithConfig = (conf) => {
   )(impassable)
   */
   rooms = makeRooms(u, conf)
+  /*
   filteredTiles = map(
     (room) => chain(filter(
       where {
@@ -200,7 +218,8 @@ makeDungeonWithConfig = (conf) => {
     ))(impassable)
   )(rooms)
   IO.trace("TILES", {filteredTiles, tiles:impassable})
-  state = {rooms, region: -1, tiles: filteredTiles}
+  */
+  state = {rooms, region: -1, tiles: impassable}
   return Dungeon(
     width,
     height,
@@ -230,7 +249,7 @@ export makeDungeonFromSeed = (seed) => makeDungeonWithConfig({
   seed: seed
 })
 
-// roomSection :: StandardRoom String -> Integer -> String
+roomSection :: StandardRoom String -> Integer -> String
 roomSection = (room, y) => pipe(
   where {
     Room(_, _, w, h, _) => pipe(
@@ -249,7 +268,7 @@ roomSection = (room, y) => pipe(
 
 toString :: x -> String
 toString = (x) => #- "" + x -#
-
+/*
 renderDungeon :: Dungeon Integer Integer (DungeonRooms String) (DungeonTiles String) -> String
 export renderDungeon = (dungeon) => pipe(
   where {
@@ -264,15 +283,15 @@ export renderDungeon = (dungeon) => pipe(
                 ifElse(
                   roomContainsTile($, x, y),
                   always(toString(x)),
-                  /*always(pipe(
-                    toString,
-                    lastChar,
-                    where {
-                      Just(c) => toString(c)
-                      Nothing => ""
-                    }
-                  )(x)) 
-                  */
+                  // always(pipe(
+                  //   toString,
+                  //   lastChar,
+                  //   where {
+                  //     Just(c) => toString(c)
+                  //     Nothing => ""
+                  //   }
+                  // )(x)) 
+                  
                   always("#")
                 )
               )(rooms)
@@ -285,3 +304,20 @@ export renderDungeon = (dungeon) => pipe(
     )(w)
   }
 )(dungeon)
+*/
+
+renderDungeon :: Dungeon Integer Integer (DungeonRooms String) (DungeonTiles String) -> String
+export renderDungeon = pipe(
+  where {
+    Dungeon(w, h, rooms, tiles) => map(
+      (room) => chain(map(
+        where {
+          Wall(x, y, _) => roomContainsTile(room, x, y) ? "*" : "."
+        }
+      ))(tiles)
+    )(rooms)
+  },
+  map(join("")),
+  join("\n")
+)
+

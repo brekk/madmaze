@@ -1,0 +1,8 @@
+export alias RecordPlace = {
+  name :: String,
+  objects :: List (Entity)
+}
+
+export type Place name raw
+  = Location(name, raw)
+  | UnknownPlace

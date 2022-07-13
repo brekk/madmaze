@@ -1,0 +1,8 @@
+import type {Character} from "@/Character"
+
+export type WorldObject name data
+  = Thing(name, data)
+  | Space(name, data)
+  | UnknownWorldObject
+
+export type Entity = Character | WorldObject

@@ -1,14 +1,14 @@
 import IO from "IO"
 
-import {colortrace, ansiColor, text} from "@/Log"
-import {NPC, Command, EventAction} from "@/Types"
-import {getActionName} from "@/Action"
-import { canDo, toSpirit} from "@/Character"
-import {makeTwister} from "@/Unusual"
-import type {Unusual} from "@/Unusual"
-import {renderDungeon, defaultConfig, makeDungeonFromSeed} from "@/Dungeon"
+import {Command, getActionName} from "@/Action"
+import { canDo, toSpirit, NPC } from "@/Character"
+import {Dungeon, defaultConfig, makeDungeonFromSeed, renderDungeon} from "@/Dungeon"
+import {EventAction} from "@/Event"
 import {madListToJSArray} from "@/Extern"
 import {} from "@/Math"
+import {colortrace, ansiColor, text} from "@/Log"
+import {makeTwister} from "@/Unusual"
+import type {Unusual} from "@/Unusual"
 
 red = colortrace(text.red)
 cyan = colortrace(text.cyan)
@@ -47,5 +47,9 @@ start = origin(WIDTH, HEIGHT)
 yellow("origin - where?", start)
 
 dungeon = makeDungeonFromSeed("dopescience-coolpants")
-red("dungeon - huh", dungeon)
+// red("dungeon - huh", dungeon)
+// red("dungeon - render", (where { Dungeon(w, h, _, _) => w ++ " x " ++ h })(dungeon))
+dotRooms = (where { Dungeon(_, _, rooms, _) => rooms })
+red("dungeon - rooms", dotRooms(dungeon))
+IO.log("01234567890123")
 #- console.log(renderDungeon(dungeon)) -#

@@ -1,0 +1,20 @@
+export type Tile x y data
+  = Wall(x, y, data)
+  | Floor(x, y, data)
+  | Door(x, y, data)
+  | Hazard(x, y, data)
+  | InvalidTile
+
+export alias CartesianTile a = Tile Integer Integer a
+
+export alias TileNeighbors a = {
+  n  :: CartesianTile a,
+  ne :: CartesianTile a,
+  e  :: CartesianTile a,
+  se :: CartesianTile a,
+  s  :: CartesianTile a,
+  sw :: CartesianTile a,
+  w  :: CartesianTile a,
+  nw :: CartesianTile a
+}
+

@@ -1,0 +1,13 @@
+export alias RecordConfig = {
+  width               :: Integer,
+  height              :: Integer,
+  roomAttempts        :: Integer,
+  roomConnectorChance :: Float,
+  roomSizeModifier    :: Integer,
+  walkWinding         :: Float
+}
+
+export alias RecordSeededConfig = {
+  ...RecordConfig,
+  seed :: String
+}

@@ -1,0 +1,4 @@
+export type Room x y w h data
+  = Room(x, y, w, h, data)
+
+export alias StandardRoom data = Room Integer Integer Integer Integer data

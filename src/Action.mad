@@ -1,5 +1,15 @@
-import type { Action } from "./Types"
-import { InvalidAction, Command } from "./Types"
+import type {Event} from "@/Event"
+
+export type Action a b c
+  = Command(a, b, c)
+  | InvalidAction(a, b)
+  | UnknownAction
+
+export alias StandardAction a = Action Integer String (Event a)
+
+export alias Actionable actionType = {
+  actions :: List (StandardAction actionType)
+}
 
 getActionName :: Action a b c -> b
 export getActionName = (
@@ -8,3 +18,4 @@ export getActionName = (
     InvalidAction(id, name) => name
   }
 )
+
