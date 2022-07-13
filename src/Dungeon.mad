@@ -1,5 +1,5 @@
 import IO from "IO"
-import { filter, append, reduce, find, nth, mapWithIndex, range} from "List"
+import { filter, append, length, reduce, find, nth, mapWithIndex, range} from "List"
 import {join, lastChar} from "String"
 import type {Maybe} from "Maybe"
 import {Just, Nothing} from "Maybe"
@@ -219,6 +219,16 @@ makeDungeonWithConfig = (conf) => {
   )(rooms)
   IO.trace("TILES", {filteredTiles, tiles:impassable})
   */
+  hsize = pipe(
+    nth(0),
+    where {
+      Just(x) => length(x)
+      Nothing => 0
+    }
+  )(impassable)
+  IO.trace(`totes wide? ${toString(width)}`, length(impassable))
+  IO.trace(`totes tall? ${toString(height)}`, hsize)
+  IO.trace(`uhhhh`, length(impassable) * hsize)
   state = {rooms, region: -1, tiles: impassable}
   return Dungeon(
     width,
@@ -268,43 +278,16 @@ roomSection = (room, y) => pipe(
 
 toString :: x -> String
 toString = (x) => #- "" + x -#
-/*
-renderDungeon :: Dungeon Integer Integer (DungeonRooms String) (DungeonTiles String) -> String
-export renderDungeon = (dungeon) => pipe(
+
+lastDigitAsString :: Integer -> String
+lastDigitAsString = pipe(
+  toString,
+  lastChar,
   where {
-    Dungeon(w, h, rooms, tiles) => pipe(
-      range(0),
-      (xs) => pipe(
-        range(0),
-        (ys) => map(
-          (x) => pipe(
-            chain(
-              (y) => map(
-                ifElse(
-                  roomContainsTile($, x, y),
-                  always(toString(x)),
-                  // always(pipe(
-                  //   toString,
-                  //   lastChar,
-                  //   where {
-                  //     Just(c) => toString(c)
-                  //     Nothing => ""
-                  //   }
-                  // )(x)) 
-                  
-                  always("#")
-                )
-              )(rooms)
-            ),
-            join("")
-          )(ys)
-        )(xs),
-        join("\n")
-      )(h)
-    )(w)
+    Just(c) => toString(c)
+    Nothing => "?"
   }
-)(dungeon)
-*/
+)
 
 renderDungeon :: Dungeon Integer Integer (DungeonRooms String) (DungeonTiles String) -> String
 export renderDungeon = pipe(
@@ -312,12 +295,18 @@ export renderDungeon = pipe(
     Dungeon(w, h, rooms, tiles) => map(
       (room) => chain(map(
         where {
-          Wall(x, y, _) => roomContainsTile(room, x, y) ? "*" : "."
+          Wall(x, y, _) => roomContainsTile(room, x, y) ?
+            " " :
+            y == 0 ?
+              lastDigitAsString(x) :
+              y == h - 1 ?
+                "#\n" :
+                "#"
         }
       ))(tiles)
     )(rooms)
   },
   map(join("")),
-  join("\n")
+  join("")
 )
 
