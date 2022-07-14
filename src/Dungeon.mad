@@ -10,23 +10,19 @@ import type {
    RecordConfig, RecordSeededConfig
 } from "@/Config"
 
-import {roomIntersectsRoom, roomContainsTile} from "@/Maze"
 
 import {abs, min, max, floor} from "@/Math"
 
-import type { StandardRoom } from "@/Room"
-import {Room} from "@/Room"
+import type { StandardRoom, DungeonRooms, StandardRoom } from "@/Room"
+import {Room, makeRooms, roomIntersectsRoom, roomContainsTile} from "@/Room"
 
-import type { Tile, CartesianTile, TileNeighbors } from "@/Tile"
+import type { DungeonTiles, Tile, CartesianTile, TileNeighbors } from "@/Tile"
 import {Door, Wall, Hazard, Floor, InvalidTile} from "@/Tile"
 
 import {Vector} from "@/Vector"
 
 import type {Unusual} from "@/Unusual"
 import {makeTwister} from "@/Unusual"
-
-export alias DungeonRooms r = List (StandardRoom r)
-export alias DungeonTiles t = List (List (CartesianTile t))
 
 export alias RecordDungeon r t = {
   rooms :: DungeonRooms r,
@@ -35,142 +31,8 @@ export alias RecordDungeon r t = {
 
 export type Dungeon width height rooms tiles = Dungeon(width, height, rooms, tiles)
 
-tileAt :: Integer -> Integer -> DungeonTiles t -> Maybe (Maybe (CartesianTile t))
-tileAt = (x, y, tiles) => pipe(
-  nth(y),
-  map(nth(x))
-)(tiles)
-
-
-getTileAt :: DungeonTiles t -> Integer -> Integer -> CartesianTile t
-getTileAt = (tiles, x, y) => pipe(
-  tileAt(x, y),
-  where {
-    Just(row) => (where {
-      Just(t) => t
-      Nothing => InvalidTile
-    })(row)
-    Nothing => InvalidTile
-  }
-)(tiles)
-
-tileExists :: DungeonTiles t -> Integer -> Integer -> Boolean
-export tileExists = (tiles, x, y) => pipe(
-  getTileAt(tiles, x),
-  where {
-    Wall(_, _, _) => true
-    Floor(_, _, _) => true
-    Door(_, _, _) => true
-    Hazard(_, _, _) => true
-    InvalidTile => false
-  }
-)(y)
-
-setTileAt :: DungeonTiles t -> Integer -> Integer -> CartesianTile t -> DungeonTiles t
-export setTileAt = (tiles, x, y, replacement) => mapWithIndex(
-  (t, i) => mapWithIndex(
-    (u, j) => when(
-      (_) => i == y && j == x,
-      always(replacement),
-      u
-    ),
-    t
-  ),
-  tiles
-)
-
-transformTile :: (x -> y -> data -> z) -> Tile x y data -> z
-transformTile = (fn, tile) => (
-  where {
-    Wall(x, y, data) => fn(x, y, data)
-    Floor(x, y, data) => fn(x, y, data)
-    Door(x, y, data) => fn(x, y, data)
-    Hazard(x, y, data) => fn(x, y, data)
-  }
-)(tile)
-
-getNeighborsFromTiles :: DungeonTiles String -> Integer -> Integer -> List (List (TileNeighbors String))
-getNeighborsFromTiles = (tiles, x, y) => {
-  at = getTileAt(tiles)
-  return map(map(
-    transformTile(
-      (_, _, _) => ({
-        n:  at( x   ,  y - 1 ),
-        ne: at( x + 1, y - 1 ),
-        e:  at( x + 1, y     ),
-        se: at( x + 1, y + 1 ),
-        s:  at( x    , y + 1 ),
-        sw: at( x - 1, y + 1 ),
-        w:  at( x - 1, y     ),
-        nw: at( x - 1, y - 1 )
-      })
-    )
-  ))(tiles)
-}
-
-doubleAndOne :: Integer -> Integer
-doubleAndOne = (x) => 1 + x * 2
-
-remainder :: Float -> Float -> Float
-remainder = (d, n) => {
-  q = n / d
-  p = q * n
-  return n - p
-}
-
-halfFloor :: Float -> Integer
-halfFloor = (y) => floatToInteger(y / 2)
-
-doubleRandomized :: Unusual -> Integer -> Integer
-doubleRandomized = (u, x) => pipe(
-  integerToFloat,
-  halfFloor,
-  u.int(0),
-  doubleAndOne
-)(x)
-
-makeRoom :: Unusual -> RecordSeededConfig -> Integer -> StandardRoom String
-makeRoom = (u, conf, _) => {
-  maxW = max(conf.width - 4)
-  maxH = max(conf.height - 4)
-  size = doubleAndOne(u.int(1, 3 + conf.roomSizeModifier))
-  rectangularity = u.int(0, doubleAndOne(halfFloor(integerToFloat(size))))
-  widthOrHeight = u.fate(2)
-  rectSize = size + rectangularity
-  w = maxW( !widthOrHeight ? rectSize : size )
-  h = maxH(  widthOrHeight ? rectSize : size )
-  w2 = abs(conf.width - w)
-  h2 = abs(conf.height - h)
-  initialX = doubleRandomized(u, w2)
-  initialY = doubleRandomized(u, h2)
-  // deal with overlaps
-  x = initialX + w > conf.width  ?
-      max( 1, w - conf.width - 1 ) :
-      initialX 
-  y = initialY + h > conf.height ?
-      max( 1, h - conf.height - 1 ) :
-      initialY
-  room = Room(x, y, w2, h2, "obsidian")
-  return room
-}
-
-makeRooms :: Unusual -> RecordSeededConfig -> DungeonRooms String
-makeRooms = (u, conf) => pipe(
-  .roomAttempts,
-  range(0),
-  reduce((prev, attempt) => {
-    room = makeRoom(u, conf, attempt) 
-    return pipe(
-      find(roomIntersectsRoom(room)),
-      where {
-        Just(_) => prev
-        Nothing => append(room, prev)
-      }
-    )(prev)
-  }, [])
-)(conf)
-
-makeDungeonWithConfig :: RecordSeededConfig -> Dungeon Integer Integer (DungeonRooms String) (DungeonTiles String)
+makeDungeonWithConfig :: RecordSeededConfig
+  -> Dungeon Integer Integer (DungeonRooms String) (DungeonTiles String)
 makeDungeonWithConfig = (conf) => {
 
   // const {seed, width, height, roomAttempts, roomConnectorChance, roomSizeModifier, walkWinding} = conf

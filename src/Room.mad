@@ -1,4 +1,109 @@
+import {reduce, append, find, range} from "List"
+import {Just, Nothing} from "Maybe"
+import {floatToInteger, integerToFloat} from "Number"
+
+import type {
+   RecordSeededConfig
+} from "@/Config"
+
+import type {Unusual} from "@/Unusual"
+import {max, abs} from "@/Math"
+
+import type {BoundingBox} from "@/Geometry"
+
 export type Room x y w h data
   = Room(x, y, w, h, data)
 
 export alias StandardRoom data = Room Integer Integer Integer Integer data
+
+export alias DungeonRooms r = List (StandardRoom r)
+
+roomContainsTile :: StandardRoom a -> Integer -> Integer -> Boolean
+export roomContainsTile = (room, x, y) => pipe(
+  getBoundingBox,
+  (bb) => !(
+    x < bb.left   ||
+    x > bb.right  ||
+    y < bb.top    ||
+    y > bb.bottom
+  )
+)(room)
+
+roomIntersectsRoom :: StandardRoom a -> StandardRoom b -> Boolean
+export roomIntersectsRoom = (a, b) => {
+  m = getBoundingBox(a)
+  n = getBoundingBox(b)
+  return !(
+    m.left   > n.right  ||
+    m.right  < n.left   ||
+    m.top    > n.bottom ||
+    m.bottom < n.top
+  )
+}
+
+doubleAndOne :: Integer -> Integer
+doubleAndOne = (x) => 1 + x * 2
+
+halfFloor :: Float -> Integer
+halfFloor = (y) => floatToInteger(y / 2)
+
+doubleRandomized :: Unusual -> Integer -> Integer
+doubleRandomized = (u, x) => pipe(
+  integerToFloat,
+  halfFloor,
+  u.int(0),
+  doubleAndOne
+)(x)
+
+makeRoom :: Unusual -> RecordSeededConfig -> Integer -> StandardRoom String
+export makeRoom = (u, conf, _) => {
+  maxW = max(conf.width - 4)
+  maxH = max(conf.height - 4)
+  size = doubleAndOne(u.int(1, 3 + conf.roomSizeModifier))
+  rectangularity = u.int(0, doubleAndOne(halfFloor(integerToFloat(size))))
+  widthOrHeight = u.fate(2)
+  rectSize = size + rectangularity
+  w = maxW( !widthOrHeight ? rectSize : size )
+  h = maxH(  widthOrHeight ? rectSize : size )
+  w2 = abs(conf.width - w)
+  h2 = abs(conf.height - h)
+  initialX = doubleRandomized(u, w2)
+  initialY = doubleRandomized(u, h2)
+  // deal with overlaps
+  x = initialX + w > conf.width  ?
+      max( 1, w - conf.width - 1 ) :
+      initialX 
+  y = initialY + h > conf.height ?
+      max( 1, h - conf.height - 1 ) :
+      initialY
+  room = Room(x, y, w2, h2, "obsidian")
+  return room
+}
+
+makeRooms :: Unusual -> RecordSeededConfig -> DungeonRooms String
+export makeRooms = (u, conf) => pipe(
+  .roomAttempts,
+  range(0),
+  reduce((prev, attempt) => {
+    room = makeRoom(u, conf, attempt) 
+    return pipe(
+      find(roomIntersectsRoom(room)),
+      where {
+        Just(_) => prev
+        Nothing => append(room, prev)
+      }
+    )(prev)
+  }, [])
+)(conf)
+
+getBoundingBox :: StandardRoom a -> BoundingBox
+export getBoundingBox = (
+  where {
+    Room(x, y, w, h, data) => ({
+      top: y,
+      bottom: y + h - 1 ,
+      left: x,
+      right: x + w - 1
+    })
+  }
+)

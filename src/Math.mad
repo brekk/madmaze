@@ -21,3 +21,9 @@ export abs = (a) => #- Math.abs(a) -#
 
 absFloat :: Float -> Float
 export absFloat = (a) => #- Math.abs(a) -#
+remainder :: Float -> Float -> Float
+export remainder = (d, n) => {
+  q = n / d
+  p = q * n
+  return n - p
+}

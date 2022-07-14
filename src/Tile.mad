@@ -1,3 +1,8 @@
+import type {Maybe} from "Maybe"
+import {Just, Nothing} from "Maybe"
+import {mapWithIndex, nth} from "List"
+import {always, when} from "Function"
+
 export type Tile x y data
   = Wall(x, y, data)
   | Floor(x, y, data)
@@ -6,6 +11,8 @@ export type Tile x y data
   | InvalidTile
 
 export alias CartesianTile a = Tile Integer Integer a
+
+export alias DungeonTiles t = List (List (CartesianTile t))
 
 export alias TileNeighbors a = {
   n  :: CartesianTile a,
@@ -18,3 +25,75 @@ export alias TileNeighbors a = {
   nw :: CartesianTile a
 }
 
+tileAt :: Integer -> Integer -> DungeonTiles t -> Maybe (Maybe (CartesianTile t))
+tileAt = (x, y, tiles) => pipe(
+  nth(y),
+  map(nth(x))
+)(tiles)
+
+
+getTileAt :: DungeonTiles t -> Integer -> Integer -> CartesianTile t
+getTileAt = (tiles, x, y) => pipe(
+  tileAt(x, y),
+  where {
+    Just(row) => (where {
+      Just(t) => t
+      Nothing => InvalidTile
+    })(row)
+    Nothing => InvalidTile
+  }
+)(tiles)
+
+tileExists :: DungeonTiles t -> Integer -> Integer -> Boolean
+export tileExists = (tiles, x, y) => pipe(
+  getTileAt(tiles, x),
+  where {
+    Wall(_, _, _) => true
+    Floor(_, _, _) => true
+    Door(_, _, _) => true
+    Hazard(_, _, _) => true
+    InvalidTile => false
+  }
+)(y)
+
+setTileAt :: DungeonTiles t -> Integer -> Integer -> CartesianTile t -> DungeonTiles t
+export setTileAt = (tiles, x, y, replacement) => mapWithIndex(
+  (t, i) => mapWithIndex(
+    (u, j) => when(
+      (_) => i == y && j == x,
+      always(replacement),
+      u
+    ),
+    t
+  ),
+  tiles
+)
+
+transformTile :: (x -> y -> data -> z) -> Tile x y data -> z
+transformTile = (fn, tile) => (
+  where {
+    Wall(x, y, data) => fn(x, y, data)
+    Floor(x, y, data) => fn(x, y, data)
+    Door(x, y, data) => fn(x, y, data)
+    Hazard(x, y, data) => fn(x, y, data)
+  }
+)(tile)
+
+getNeighborsFromTiles :: DungeonTiles String -> Integer -> Integer -> List (List (TileNeighbors String))
+getNeighborsFromTiles = (tiles, x, y) => {
+  at = getTileAt(tiles)
+  return map(map(
+    transformTile(
+      (_, _, _) => ({
+        n:  at( x   ,  y - 1 ),
+        ne: at( x + 1, y - 1 ),
+        e:  at( x + 1, y     ),
+        se: at( x + 1, y + 1 ),
+        s:  at( x    , y + 1 ),
+        sw: at( x - 1, y + 1 ),
+        w:  at( x - 1, y     ),
+        nw: at( x - 1, y - 1 )
+      })
+    )
+  ))(tiles)
+}
