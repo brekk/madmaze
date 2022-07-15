@@ -68,9 +68,10 @@ getTileAt = (pos, tiles) => pipe(
   }
 )(tiles)
 
+/*
 tileExists :: Position -> DungeonTiles t -> Boolean
 export tileExists = (pos, tiles) => pipe(
-  getTileAt(tiles),
+  getTileAt($, tiles),
   where {
     Wall(_, _, _) => true
     Floor(_, _, _) => true
@@ -79,6 +80,7 @@ export tileExists = (pos, tiles) => pipe(
     InvalidTile => false
   }
 )(pos)
+*/
 
 setTileAt :: DungeonTiles t -> Position -> CartesianTile t -> DungeonTiles t
 export setTileAt = (tiles, pos, replacement) => map(

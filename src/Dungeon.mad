@@ -68,7 +68,7 @@ makeDungeonWithConfig = (conf) => {
     ))(i)
   )(impassable)
   */
-  // rooms = makeRooms(u, conf)
+  rooms = makeRooms(u, conf)
   /*
   filteredTiles = map(
     (room) => chain(filter(
@@ -91,7 +91,7 @@ makeDungeonWithConfig = (conf) => {
   IO.trace(`totes tall? ${toString(height)}`, hsize)
   IO.trace(`uhhhh`, length(impassable) * hsize)
   */
-  state = {rooms: [], region: -1, tiles: impassable}
+  state = {rooms, region: -1, tiles: impassable}
   return Dungeon(
     width,
     height,
@@ -151,28 +151,27 @@ lastDigitAsString = pipe(
   }
 )
 
-renderDungeon :: Dungeon Integer Integer (DungeonRooms String) (DungeonTiles String) -> String
-export renderDungeon = pipe(
+// renderDungeon :: Dungeon Integer Integer (DungeonRooms String) (DungeonTiles String) -> String
+export renderDungeon = (dungeon) => pipe(
   where {
     Dungeon(w, h, rooms, tiles) => map(
-      (room) => chain(map(
+      (room) => map(
         where {
           Wall(pos, _) => roomContainsPosition(room, pos) ?
             " " :
             where (pos) {
               #[x, y] => (
                 y == 0 ?
-                  lastDigitAsString(x) :
-                  y == h - 1 ?
-                    "#\n" :
-                    "#"
+                lastDigitAsString(x) :
+                y == h - 1 ?
+                "#\n" :
+                "#"
               )
             }
         }
-      ))(tiles)
+      )(tiles)
     )(rooms)
   },
   map(join("")),
   join("")
-)
-
+)(dungeon)
