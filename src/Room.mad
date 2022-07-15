@@ -11,23 +11,29 @@ import {max, abs} from "@/Math"
 
 import type {BoundingBox} from "@/Geometry"
 
-export type Room x y w h data
-  = Room(x, y, w, h, data)
+import type {Position} from "@/Tile"
 
-export alias StandardRoom data = Room Integer Integer Integer Integer data
+export type Room pos w h data
+  = Room(pos, w, h, data)
+
+export alias StandardRoom data = Room Position Integer Integer data
 
 export alias DungeonRooms r = List (StandardRoom r)
 
-roomContainsTile :: StandardRoom a -> Integer -> Integer -> Boolean
-export roomContainsTile = (room, x, y) => pipe(
-  getBoundingBox,
-  (bb) => !(
-    x < bb.left   ||
-    x > bb.right  ||
-    y < bb.top    ||
-    y > bb.bottom
-  )
-)(room)
+roomContainsPosition :: StandardRoom a -> Position -> Boolean
+export roomContainsPosition = (room, pos) => (
+  where (pos) {
+    #[x, y] => pipe(
+      getBoundingBox,
+      (bb) => !(
+        x < bb.left   ||
+        x > bb.right  ||
+        y < bb.top    ||
+        y > bb.bottom
+      )
+    )(room)
+  }
+)
 
 roomIntersectsRoom :: StandardRoom a -> StandardRoom b -> Boolean
 export roomIntersectsRoom = (a, b) => {
@@ -76,7 +82,7 @@ export makeRoom = (u, conf, _) => {
   y = initialY + h > conf.height ?
       max( 1, h - conf.height - 1 ) :
       initialY
-  room = Room(x, y, w2, h2, "obsidian")
+  room = Room(#[x, y], w2, h2, "obsidian")
   return room
 }
 
@@ -99,11 +105,15 @@ export makeRooms = (u, conf) => pipe(
 getBoundingBox :: StandardRoom a -> BoundingBox
 export getBoundingBox = (
   where {
-    Room(x, y, w, h, data) => ({
-      top: y,
-      bottom: y + h - 1 ,
-      left: x,
-      right: x + w - 1
-    })
+    Room(pos, w, h, data) => (
+      where (pos) {
+        #[x, y] => ({
+          top: y,
+          bottom: y + h - 1 ,
+          left: x,
+          right: x + w - 1
+        })
+      }
+    )
   }
 )
