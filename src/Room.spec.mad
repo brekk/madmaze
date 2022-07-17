@@ -2,6 +2,7 @@ import {test,assertEquals} from "Test"
 import {complement} from "Function"
 import IO from "IO"
 
+import {assertNotEqual} from "@/Test"
 import {makeTwister} from "@/Unusual"
 import {defaultConfig} from "@/Dungeon"
 import {
@@ -10,7 +11,8 @@ import {
   roomIntersectsRoom,
   makeRoom,
   Room,
-  makeRooms
+  makeRooms,
+  maxStageProp
 } from "@/Room"
 
 coolroom = Room(#[10, 4], 5, 20, "coolroom")
@@ -38,14 +40,34 @@ test("roomIntersectsRoom", (_) => pipe(
   assertEquals([false, true])
 )([shitroom, othercoolroom]))
 
+unseeded = {
+  seed: "unseeded",
+  width: 17,
+  height: 13,
+  roomAttempts: 50,
+  roomConnectorChance: 50.0,
+  roomSizeModifier: 1,
+  walkWinding: 1 / 2
+}
+
 test("makeRoom", (_) => {
   seed = "Room.mad"
-  width = 17
-  height = 13
   u = makeTwister(seed)
-  conf = {...defaultConfig, seed, width, height }
+  conf = {...unseeded, seed}
+  IO.trace("CONF", conf)
+  a = makeRoom(u, conf, 10)
+  b = makeRoom(u, conf, 1)
+  return assertNotEqual(a, b)
+})
+
+test("maxStageProp", (_) => {
+  maxConnectorChance = maxStageProp(.roomAttempts)
+  connect = maxConnectorChance({
+    ...unseeded,
+    seed: "maxStageProp",
+  })
   return pipe(
-    makeRoom(u, $, 10),
-    complement(assertEquals(makeRoom(u, conf, 1)))
-  )(conf)
+    map(connect),
+    assertEquals($, [46, 1, 10])
+  )([100, -2, 10])
 })

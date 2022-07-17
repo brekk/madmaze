@@ -1,8 +1,8 @@
 import IO from "IO"
 
 // trace :: Inspect a => String -> a -> a
-peep :: Inspect a => String -> (a -> a) -> a -> a
-export peep = (v, look, a) => pipe(
+drill :: Inspect b => String -> (a -> b) -> a -> b
+export drill = (v, look, a) => pipe(
   look,
   IO.trace(v)
 )(a)

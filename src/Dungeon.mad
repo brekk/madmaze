@@ -6,11 +6,8 @@ import {Just, Nothing} from "Maybe"
 import {identity, ifElse, equals, when, always} from "Function"
 import {formatDecimal, floatToInteger, integerToFloat} from "Number"
 
-import type {
-   RecordConfig, RecordSeededConfig
-} from "@/Config"
-
-
+import type {RecordSeededConfig, RecordConfig} from "@/Config"
+import {drill} from "@/IO"
 import {abs, min, max, floor} from "@/Math"
 
 import type { StandardRoom, DungeonRooms, StandardRoom } from "@/Room"
@@ -21,15 +18,11 @@ import {toString} from "@/String"
 import type { Position, DungeonTiles, Tile, CartesianTile, TileNeighbors } from "@/Tile"
 import {Door, Wall, Hazard, Floor, InvalidTile} from "@/Tile"
 
-import {Vector} from "@/Vector"
-
 import type {Unusual} from "@/Unusual"
 import {makeTwister} from "@/Unusual"
 
-export alias RecordDungeon r t = {
-  rooms :: DungeonRooms r,
-  tiles :: DungeonTiles t
-}
+import {Vector} from "@/Vector"
+
 
 export type Dungeon width height rooms tiles = Dungeon(width, height, rooms, tiles)
 
@@ -89,7 +82,7 @@ makeDungeonWithConfig = (conf) => {
   // tiles = growMaze(rooms, gestalt)
   
   IO.trace("how many tiles?", length(gestalt))
-  // peep("how many tiles inspectory?", length, gestalt)
+  drill("how many tiles inspectory?", length, gestalt)
   state = {rooms, region: -1, tiles: gestalt}
   return Dungeon(
     width,
@@ -99,29 +92,19 @@ makeDungeonWithConfig = (conf) => {
   )
 }
 
-defaultConfig :: RecordConfig
+defaultConfig :: RecordSeededConfig
 export defaultConfig = {
-  width: 5,
-  height: 5,
-  roomAttempts: 50,
-  roomConnectorChance: 50,
-  roomSizeModifier: 1,
-  walkWinding: 1 / 2
-}
-
-// makeSeedableDungeonDefault :: String -> RecordSeededConfig
-// makeSeedableDungeonDefault = (seed) => ({...defaultConfig, seed})
-
-makeDungeonFromSeed :: String -> Dungeon Integer Integer (DungeonRooms String) (DungeonTiles String)
-export makeDungeonFromSeed = (seed) => makeDungeonWithConfig({
+  seed: "default config",
   width: 15,
   height: 15,
   roomAttempts: 50,
   roomConnectorChance: 50.0,
   roomSizeModifier: 1,
-  walkWinding: 1 / 2,
-  seed: seed
-})
+  walkWinding: 1 / 2
+}
+
+makeDungeonFromSeed :: String -> Dungeon Integer Integer (DungeonRooms String) (DungeonTiles String)
+export makeDungeonFromSeed = (seed) => makeDungeonWithConfig({...defaultConfig, seed})
 
 roomSection :: StandardRoom String -> Integer -> String
 roomSection = (room, y) => pipe(
@@ -171,6 +154,5 @@ export renderDungeon = (dungeon) => pipe(
       )(tiles)
     )(rooms)
   },
-  // map(join("")),
   join("")
 )(dungeon)

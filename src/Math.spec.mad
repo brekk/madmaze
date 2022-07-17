@@ -1,0 +1,18 @@
+import IO from "IO"
+import {test,assertEquals} from "Test"
+import {bound} from "@/Math"
+
+test("sanity", (_) => assertEquals(true, true))
+
+IO.trace("bound", bound(0, 10, 100))
+IO.trace("bound", bound(0, 10, -10))
+IO.trace("bound", bound(0, 10, 5))
+
+test("bound", (_) => {
+  return pipe(
+    map(bound(4, 80)),
+    assertEquals([80, 4, 10, 40])
+  )(
+    [ 1000, -100, 10, 40 ]
+  )
+})

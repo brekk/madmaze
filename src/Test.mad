@@ -1,0 +1,9 @@
+import type {AssertionError} from "Test"
+import {AssertionError} from "Test"
+import Wish from "Wish"
+
+assertNotEqual :: Eq a => a -> a -> Wish.Wish (AssertionError a) {}
+export assertNotEqual = (actual, expected) => actual == expected
+  ? Wish.bad(AssertionError(expected, actual))
+  : of({})
+
