@@ -8,11 +8,11 @@ import type {
 } from "@/Config"
 
 import type {Unusual} from "@/Unusual"
-import {max, abs} from "@/Math"
+import {makeTwister} from "@/Unusual"
+import {min, max, abs} from "@/Math"
 
-import type {BoundingBox} from "@/Geometry"
-
-import type {Position} from "@/Tile"
+import type {BoundingBox, Position} from "@/Tile"
+import {toString} from "@/String"
 
 export type Room pos w h data
   = Room(pos, w, h, data)
@@ -20,6 +20,23 @@ export type Room pos w h data
 export alias StandardRoom data = Room Position Integer Integer data
 
 export alias DungeonRooms r = List (StandardRoom r)
+
+
+getBoundingBox :: StandardRoom a -> BoundingBox
+export getBoundingBox = (
+  where {
+    Room(pos, w, h, data) => (
+      where (pos) {
+        #[x, y] => ({
+          top: y,
+          bottom: y + h - 1 ,
+          left: x,
+          right: x + w - 1
+        })
+      }
+    )
+  }
+)
 
 roomContainsPosition :: StandardRoom a -> Position -> Boolean
 export roomContainsPosition = (room, pos) => (
@@ -63,17 +80,27 @@ doubleRandomized = (u, x) => pipe(
 )(x)
 
 makeRoom :: Unusual -> RecordSeededConfig -> Integer -> StandardRoom String
-export makeRoom = (u, conf, _) => {
-  maxW = max(conf.width - 4)
-  maxH = max(conf.height - 4)
+export makeRoom = (u, conf, attempt) => {
+  maxW = pipe(
+    min(1),
+    max(conf.width - 4)
+  )
+  maxH = pipe(
+    min(1),
+    max(conf.height - 4)
+  )
   size = doubleAndOne(u.int(1, 3 + conf.roomSizeModifier))
+
   rectangularity = u.int(0, doubleAndOne(halfFloor(integerToFloat(size))))
   widthOrHeight = u.fate(2)
   rectSize = size + rectangularity
   w = maxW( !widthOrHeight ? rectSize : size )
   h = maxH(  widthOrHeight ? rectSize : size )
+  
+  IO.trace("wh", {w, h})
   w2 = abs(conf.width - w)
   h2 = abs(conf.height - h)
+  IO.trace("wh2", {w2, h2})
   initialX = doubleRandomized(u, w2)
   initialY = doubleRandomized(u, h2)
   // deal with overlaps
@@ -87,34 +114,23 @@ export makeRoom = (u, conf, _) => {
   return room
 }
 
-makeRooms :: Unusual -> RecordSeededConfig -> DungeonRooms String
-export makeRooms = (u, conf) => pipe(
-  .roomAttempts,
-  range(0),
-  reduce((prev, attempt) => {
-    room = makeRoom(u, conf, attempt) 
-    return pipe(
-      find(roomIntersectsRoom(room)),
-      where {
-        Just(_) => prev
-        Nothing => append(room, prev)
-      }
-    )(prev)
-  }, [])
-)(conf)
-
-getBoundingBox :: StandardRoom a -> BoundingBox
-export getBoundingBox = (
-  where {
-    Room(pos, w, h, data) => (
-      where (pos) {
-        #[x, y] => ({
-          top: y,
-          bottom: y + h - 1 ,
-          left: x,
-          right: x + w - 1
-        })
-      }
-    )
-  }
-)
+makeRooms :: RecordSeededConfig -> DungeonRooms String
+export makeRooms = (conf) => {
+  u = makeTwister(conf.seed)
+  return pipe(
+    .roomAttempts,
+    range(0),
+    reduce((prev, attempt) => {
+      IO.trace(`room attempt #${toString(attempt)} a`, prev)
+      room = makeRoom(u, conf, attempt) 
+      IO.trace(`room attempt #${toString(attempt)} b`, room)
+      return pipe(
+        find(roomIntersectsRoom(room)),
+        where {
+          Just(_) => prev
+          Nothing => append(room, prev)
+        }
+      )(prev)
+    }, [])
+  )(conf)
+}

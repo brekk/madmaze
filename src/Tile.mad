@@ -28,6 +28,13 @@ export alias TileNeighbors a = {
   nw :: CartesianTile a
 }
 
+export alias BoundingBox = {
+  top    :: Integer,
+  right  :: Integer,
+  bottom :: Integer,
+  left   :: Integer
+}
+
 coord :: Tile Position a -> Position
 coord = pipe(
   where {
@@ -68,19 +75,14 @@ getTileAt = (pos, tiles) => pipe(
   }
 )(tiles)
 
-/*
 tileExists :: Position -> DungeonTiles t -> Boolean
 export tileExists = (pos, tiles) => pipe(
   getTileAt($, tiles),
   where {
-    Wall(_, _, _) => true
-    Floor(_, _, _) => true
-    Door(_, _, _) => true
-    Hazard(_, _, _) => true
     InvalidTile => false
+    _ => true
   }
 )(pos)
-*/
 
 setTileAt :: DungeonTiles t -> Position -> CartesianTile t -> DungeonTiles t
 export setTileAt = (tiles, pos, replacement) => map(
@@ -99,34 +101,32 @@ transformTile = (fn, tile) => (
     Hazard(pos, data) => fn(pos, data)
   }
 )(tile)
-/*
-getNeighborsFromTiles :: DungeonTiles String -> Position -> List (List (TileNeighbors String))
-getNeighborsFromTiles = (tiles, pos) => {
+
+getNeighborsForPosition :: DungeonTiles String -> Position -> TileNeighbors String
+getNeighborsForPosition = (tiles, pos) => {
   at = getTileAt($, tiles)
+  tile = at(pos)
   return (
     where (pos) {
-      #[x, y] => map(
+      #[x, y] =>
         transformTile(
           (_, _) => ({
-          n:  at( #[ x   ,  y - 1 ] ),
-          ne: at( #[ x + 1, y - 1 ] ),
-          e:  at( #[ x + 1, y     ] ),
-          se: at( #[ x + 1, y + 1 ] ),
-          s:  at( #[ x    , y + 1 ] ),
-          sw: at( #[ x - 1, y + 1 ] ),
-          w:  at( #[ x - 1, y     ] ),
-          nw: at( #[ x - 1, y - 1 ] )
-        })
-      )
-    )(tiles)
+            n:  at( #[ x   ,  y - 1 ] ),
+            ne: at( #[ x + 1, y - 1 ] ),
+            e:  at( #[ x + 1, y     ] ),
+            se: at( #[ x + 1, y + 1 ] ),
+            s:  at( #[ x    , y + 1 ] ),
+            sw: at( #[ x - 1, y + 1 ] ),
+            w:  at( #[ x - 1, y     ] ),
+            nw: at( #[ x - 1, y - 1 ] )
+          })
+        )(tile)
     }
   )
 }
-*/
 
-export alias BoundingBox = {
-  top    :: Integer,
-  right  :: Integer,
-  bottom :: Integer,
-  left   :: Integer
-}
+getNeighborsForTile :: DungeonTiles String -> CartesianTile String -> TileNeighbors String
+getNeighborsForTile = (tiles, tile) => pipe(
+  coord,
+  getNeighborsForPosition(tiles) 
+)(tile)

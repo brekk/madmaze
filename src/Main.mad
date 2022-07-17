@@ -9,6 +9,7 @@ import {} from "@/Math"
 import {colortrace, ansiColor, text} from "@/Log"
 import {makeTwister} from "@/Unusual"
 import type {Unusual} from "@/Unusual"
+import {toString} from "@/String"
 
 red = colortrace(text.red)
 cyan = colortrace(text.cyan)
@@ -46,7 +47,8 @@ HEIGHT = 20
 start = origin(WIDTH, HEIGHT)
 yellow("origin - where?", start)
 
-dungeon = makeDungeonFromSeed("dopescience-coolpants")
+chaos = #- Date.now() -#
+dungeon = makeDungeonFromSeed(toString(chaos))
 // red("dungeon - huh", dungeon)
 // red("dungeon - render", (where { Dungeon(w, h, _, _) => w ++ " x " ++ h })(dungeon))
 // dotRooms = (where { Dungeon(_, _, rooms, _) => rooms })

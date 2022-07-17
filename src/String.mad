@@ -1,0 +1,2 @@
+toString :: a -> String
+export toString = (x) => #- "" + x -#

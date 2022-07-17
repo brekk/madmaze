@@ -1,6 +1,0 @@
-export alias BoundingBox = {
-  top    :: Integer,
-  right  :: Integer,
-  bottom :: Integer,
-  left   :: Integer
-}

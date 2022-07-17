@@ -1,0 +1,51 @@
+import {test,assertEquals} from "Test"
+import {complement} from "Function"
+import IO from "IO"
+
+import {makeTwister} from "@/Unusual"
+import {defaultConfig} from "@/Dungeon"
+import {
+  getBoundingBox,
+  roomContainsPosition,
+  roomIntersectsRoom,
+  makeRoom,
+  Room,
+  makeRooms
+} from "@/Room"
+
+coolroom = Room(#[10, 4], 5, 20, "coolroom")
+
+test("getBoundingBox", (_) => pipe(
+  getBoundingBox,
+  assertEquals({
+    top: 4,
+    bottom: 23,
+    left: 10,
+    right: 14
+  })
+)(coolroom))
+
+test("roomContainsPosition", (_) => pipe(
+  map(roomContainsPosition(coolroom)),
+  assertEquals([true, false, false, true])
+)([#[10,4], #[0, 0], #[-1, 30], #[14,23]]))
+
+shitroom = Room(#[2, 2], 2, 2, "shit")
+othercoolroom = Room(#[9, 3], 4, 5, "coolroom2")
+
+test("roomIntersectsRoom", (_) => pipe(
+  map(roomIntersectsRoom(coolroom)),
+  assertEquals([false, true])
+)([shitroom, othercoolroom]))
+
+test("makeRoom", (_) => {
+  seed = "Room.mad"
+  width = 17
+  height = 13
+  u = makeTwister(seed)
+  conf = {...defaultConfig, seed, width, height }
+  return pipe(
+    makeRoom(u, $, 10),
+    complement(assertEquals(makeRoom(u, conf, 1)))
+  )(conf)
+})
