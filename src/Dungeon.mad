@@ -97,9 +97,9 @@ export defaultConfig = {
   seed: "default config",
   width: 50,
   height: 50,
-  roomAttempts: 4000,
+  roomAttempts: 100000,
   roomConnectorChance: 50.0,
-  roomSizeModifier: 46,
+  roomSizeModifier: 4000,
   walkWinding: 1 / 2
 }
 
@@ -133,6 +133,10 @@ lastDigitAsString = pipe(
   }
 )
 
+BLOCK_EDGE = "o"
+BLOCK_WALL = "#"
+BLOCK_ROOM = " "
+
 renderDungeon :: Dungeon Integer Integer (DungeonRooms String) (DungeonTiles String) -> String
 export renderDungeon = (dungeon) => (
   where (dungeon) {
@@ -144,45 +148,23 @@ export renderDungeon = (dungeon) => (
               #[x, y] => pipe(
                 find(roomContainsPosition($, pos)),
                 (found) => (where (found) {
-                  Just(_) => ` `
-                  Nothing => `#`
+                  Just(_) => BLOCK_ROOM
+                  Nothing => BLOCK_WALL
                 }),
-                (b) => `${b}${y == h - 1 ? "\n" : ""}`
+                (b) => `${y == 0 ? BLOCK_EDGE : ""}${b}${y == h - 1 ? BLOCK_EDGE ++ "\n" : ""}`
               )(rooms)
             }
           )
         )
       ),
-      join("")
+      join(""),
+      (meat) => pipe(
+        range(0),
+        map(always(BLOCK_EDGE)),
+        join(""),
+        (bread) => bread ++ "\n" ++ meat ++ bread
+      )(w + 2)
     )(tiles)
   }
 )
 
-/*
-export renderDungeon = (dungeon) => pipe(
-  where {
-    Dungeon(w, h, rooms, tiles) => chain(
-      (room) => map(
-        where {
-          Wall(pos, _) => pipe(
-            where {
-              #[x, y] => (
-                roomContainsPosition(room, pos) ?
-                  y == h - 1 ?
-                    " \n" :
-                    " " :
-                  y == 0 ?
-                    lastDigitAsString(x) :
-                    y == h - 1 ?
-                      "#\n" :
-                      "#"
-              )
-            }
-          )(pos)
-        }
-      )(tiles)
-    )(rooms)
-  },
-  join("")
-)(dungeon)
-*/

@@ -54,5 +54,4 @@ dungeon = makeDungeonFromSeed(toString(chaos))
 // red("dungeon - render", (where { Dungeon(w, h, _, _) => w ++ " x " ++ h })(dungeon))
 dotRooms = (where { Dungeon(_, _, rooms, _) => rooms })
 red("dungeon - rooms", dotRooms(dungeon))
-#- console.log("012345678901234") -#
 #- console.log(renderDungeon(dungeon)) -#

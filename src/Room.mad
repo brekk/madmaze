@@ -53,8 +53,8 @@ export roomContainsPosition = (room, pos) => (
   }
 )
 
-roomIntersectsRoom :: StandardRoom a -> StandardRoom b -> Boolean
-export roomIntersectsRoom = (a, b) => {
+roomOverlapsRoom :: StandardRoom a -> StandardRoom b -> Boolean
+export roomOverlapsRoom = (a, b) => {
   m = getBoundingBox(a)
   n = getBoundingBox(b)
   return !(
@@ -62,6 +62,18 @@ export roomIntersectsRoom = (a, b) => {
     m.right  < n.left   ||
     m.top    > n.bottom ||
     m.bottom < n.top
+  )
+}
+
+roomIntersectsRoom :: StandardRoom a -> StandardRoom b -> Boolean
+export roomIntersectsRoom = (a, b) => {
+  m = getBoundingBox(a)
+  n = getBoundingBox(b)
+  return !(
+    m.left   - 1 > n.right  ||
+    m.right  + 1 < n.left   ||
+    m.top    - 1 > n.bottom ||
+    m.bottom + 1 < n.top
   )
 }
 
