@@ -16,7 +16,7 @@ import {Room, makeRooms, roomIntersectsRoom, roomContainsPosition} from "@/Room"
 import {toString} from "@/String"
 
 import type { Position, DungeonTiles, Tile, CartesianTile, TileNeighbors } from "@/Tile"
-import {Door, Wall, Hazard, Floor, InvalidTile} from "@/Tile"
+import {transformTile, Door, Wall, Hazard, Floor, InvalidTile} from "@/Tile"
 
 import type {Unusual} from "@/Unusual"
 import {makeTwister} from "@/Unusual"
@@ -95,11 +95,11 @@ makeDungeonWithConfig = (conf) => {
 defaultConfig :: RecordSeededConfig
 export defaultConfig = {
   seed: "default config",
-  width: 15,
-  height: 15,
-  roomAttempts: 50,
+  width: 50,
+  height: 50,
+  roomAttempts: 4000,
   roomConnectorChance: 50.0,
-  roomSizeModifier: 1,
+  roomSizeModifier: 46,
   walkWinding: 1 / 2
 }
 
@@ -134,25 +134,55 @@ lastDigitAsString = pipe(
 )
 
 renderDungeon :: Dungeon Integer Integer (DungeonRooms String) (DungeonTiles String) -> String
+export renderDungeon = (dungeon) => (
+  where (dungeon) {
+    Dungeon(w, h, rooms, tiles) => pipe(
+      map(
+        transformTile(
+          (pos, _) => (
+            where (pos) {
+              #[x, y] => pipe(
+                find(roomContainsPosition($, pos)),
+                (found) => (where (found) {
+                  Just(_) => ` `
+                  Nothing => `#`
+                }),
+                (b) => `${b}${y == h - 1 ? "\n" : ""}`
+              )(rooms)
+            }
+          )
+        )
+      ),
+      join("")
+    )(tiles)
+  }
+)
+
+/*
 export renderDungeon = (dungeon) => pipe(
   where {
     Dungeon(w, h, rooms, tiles) => chain(
       (room) => map(
         where {
-          Wall(pos, _) => roomContainsPosition(room, pos) ?
-            " " :
-            where (pos) {
+          Wall(pos, _) => pipe(
+            where {
               #[x, y] => (
-                y == 0 ?
-                lastDigitAsString(x) :
-                y == h - 1 ?
-                "#\n" :
-                "#"
+                roomContainsPosition(room, pos) ?
+                  y == h - 1 ?
+                    " \n" :
+                    " " :
+                  y == 0 ?
+                    lastDigitAsString(x) :
+                    y == h - 1 ?
+                      "#\n" :
+                      "#"
               )
             }
+          )(pos)
         }
       )(tiles)
     )(rooms)
   },
   join("")
 )(dungeon)
+*/

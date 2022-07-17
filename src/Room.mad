@@ -9,7 +9,7 @@ import type {
 
 import type {Unusual} from "@/Unusual"
 import {makeTwister} from "@/Unusual"
-import {min, max, abs} from "@/Math"
+import {bound, min, max, abs} from "@/Math"
 
 import type {BoundingBox, Position} from "@/Tile"
 import {toString} from "@/String"
@@ -80,10 +80,7 @@ doubleRandomized = (u, x) => pipe(
 )(x)
 
 maxStageProp :: (RecordSeededConfig -> Integer) -> RecordSeededConfig -> Integer -> Integer
-export maxStageProp = (fn, conf, x) => pipe(
-  max(1),
-  min(fn(conf) - 4)
-)(x)
+export maxStageProp = (fn, conf, x) => bound(1, fn(conf) - 4, x)
 
 maxStageWidth :: RecordSeededConfig -> Integer -> Integer
 maxStageWidth = maxStageProp(.width) 
@@ -95,14 +92,12 @@ makeRoom :: Unusual -> RecordSeededConfig -> Integer -> StandardRoom String
 export makeRoom = (u, conf, attempt) => {
   maxW = maxStageWidth(conf) 
   maxH = maxStageHeight(conf) 
-  size = doubleAndOne(u.int(1, 3 + conf.roomSizeModifier))
+  size = doubleAndOne(u.int(1, conf.roomSizeModifier))
   rectangularity = u.int(0, doubleAndOne(halfFloor(integerToFloat(size))))
   widthOrHeight = u.fate(2)
   rectSize = size + rectangularity
-  v = !widthOrHeight ? rectSize : size
-  g = widthOrHeight ? rectSize : size
-  w = maxW( v )
-  h = maxH( g )
+  w = maxW( !widthOrHeight ? rectSize : size)
+  h = maxH( widthOrHeight ? rectSize : size )
   w2 = (conf.width - w)
   h2 = (conf.height - h)
   initialX = doubleRandomized(u, w2)

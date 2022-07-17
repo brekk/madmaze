@@ -93,7 +93,7 @@ export setTileAt = (tiles, pos, replacement) => map(
 )(tiles)
 
 transformTile :: (pos -> data -> z) -> Tile pos data -> z
-transformTile = (fn, tile) => (
+export transformTile = (fn, tile) => (
   where {
     Wall(pos, data) => fn(pos, data)
     Floor(pos, data) => fn(pos, data)
