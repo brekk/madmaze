@@ -1,3 +1,6 @@
+round :: Float -> Integer
+export round = (x) => #- Math.round(x) -#
+
 floor :: Integer -> Integer
 export floor = (x) => #- Math.floor(x) -#
 
@@ -21,9 +24,16 @@ export abs = (a) => #- Math.abs(a) -#
 
 absFloat :: Float -> Float
 export absFloat = (a) => #- Math.abs(a) -#
+
 remainder :: Float -> Float -> Float
 export remainder = (d, n) => {
   q = n / d
   p = q * n
   return n - p
 }
+
+bound :: Integer -> Integer -> Integer -> Integer
+export bound = (low, high, x) => pipe(
+  min(high),
+  max(low)
+)(x)

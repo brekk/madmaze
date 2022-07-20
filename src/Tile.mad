@@ -1,99 +1,126 @@
 import type {Maybe} from "Maybe"
+import IO from "IO"
 import {Just, Nothing} from "Maybe"
-import {mapWithIndex, nth} from "List"
+import {find} from "List"
 import {always, when} from "Function"
+import {fromList} from "Dictionary"
+import {} from "String"
 
-export type Tile x y data
-  = Wall(x, y, data)
-  | Floor(x, y, data)
-  | Door(x, y, data)
-  | Hazard(x, y, data)
+export alias Position = #[Integer, Integer]
+
+export type Tile pos data
+  = Wall(pos, data)
+  | Floor(pos, data)
+  | Door(pos, data)
+  | Hazard(pos, data)
   | InvalidTile
 
-export alias CartesianTile a = Tile Integer Integer a
+export alias CartesianTile a = Tile Position a
 
-export alias DungeonTiles t = List (List (CartesianTile t))
+export alias DungeonTiles t = List (CartesianTile t)
 
-export alias TileNeighbors a = {
-  n  :: CartesianTile a,
-  ne :: CartesianTile a,
-  e  :: CartesianTile a,
-  se :: CartesianTile a,
-  s  :: CartesianTile a,
-  sw :: CartesianTile a,
-  w  :: CartesianTile a,
-  nw :: CartesianTile a
+export alias TileNeighbors a = Dictionary String (CartesianTile String)
+
+export alias BoundingBox = {
+  top    :: Integer,
+  right  :: Integer,
+  bottom :: Integer,
+  left   :: Integer
 }
 
-tileAt :: Integer -> Integer -> DungeonTiles t -> Maybe (Maybe (CartesianTile t))
-tileAt = (x, y, tiles) => pipe(
-  nth(y),
-  map(nth(x))
+coord :: Tile Position a -> Position
+export coord = pipe(
+  where {
+    Wall(pos, _) => pos 
+    Floor(pos, _) => pos 
+    Door(pos, _) => pos 
+    Hazard(pos, _) => pos 
+    InvalidTile => #[-1,-1]
+  }
+)
+
+whale = Wall(#[10,4], "buddy")
+IO.log(coord(whale))
+
+coordEquals :: Position -> Tile Position a -> Boolean
+coordEquals = (pos, tile) => pipe(
+  where {
+    #[x, y] => pipe(
+      coord,
+      where {
+        #[x2, y2] => x == x2 && y == y2
+      }
+    )(tile)
+  }
+)(pos)
+
+tileAt :: Position -> DungeonTiles t -> Maybe (CartesianTile t)
+tileAt = (pos, tiles) => find(
+  coordEquals(pos) 
 )(tiles)
 
 
-getTileAt :: DungeonTiles t -> Integer -> Integer -> CartesianTile t
-getTileAt = (tiles, x, y) => pipe(
-  tileAt(x, y),
+getTileAt :: Position -> DungeonTiles t -> CartesianTile t
+getTileAt = (pos, tiles) => pipe(
+  tileAt(pos),
   where {
-    Just(row) => (where {
-      Just(t) => t
-      Nothing => InvalidTile
-    })(row)
+    Just(t) => t 
     Nothing => InvalidTile
   }
 )(tiles)
 
-tileExists :: DungeonTiles t -> Integer -> Integer -> Boolean
-export tileExists = (tiles, x, y) => pipe(
-  getTileAt(tiles, x),
+tileExists :: Position -> DungeonTiles t -> Boolean
+export tileExists = (pos, tiles) => pipe(
+  getTileAt($, tiles),
   where {
-    Wall(_, _, _) => true
-    Floor(_, _, _) => true
-    Door(_, _, _) => true
-    Hazard(_, _, _) => true
     InvalidTile => false
+    _ => true
   }
-)(y)
+)(pos)
 
-setTileAt :: DungeonTiles t -> Integer -> Integer -> CartesianTile t -> DungeonTiles t
-export setTileAt = (tiles, x, y, replacement) => mapWithIndex(
-  (t, i) => mapWithIndex(
-    (u, j) => when(
-      (_) => i == y && j == x,
-      always(replacement),
-      u
-    ),
-    t
-  ),
-  tiles
-)
+setTileAt :: DungeonTiles t -> Position -> CartesianTile t -> DungeonTiles t
+export setTileAt = (tiles, pos, replacement) => map(
+  when(
+    coordEquals(pos),
+    always(replacement)
+  )
+)(tiles)
 
-transformTile :: (x -> y -> data -> z) -> Tile x y data -> z
-transformTile = (fn, tile) => (
+transformTile :: (pos -> data -> z) -> Tile pos data -> z
+export transformTile = (fn, tile) => (
   where {
-    Wall(x, y, data) => fn(x, y, data)
-    Floor(x, y, data) => fn(x, y, data)
-    Door(x, y, data) => fn(x, y, data)
-    Hazard(x, y, data) => fn(x, y, data)
+    Wall(pos, data) => fn(pos, data)
+    Floor(pos, data) => fn(pos, data)
+    Door(pos, data) => fn(pos, data)
+    Hazard(pos, data) => fn(pos, data)
   }
 )(tile)
 
-getNeighborsFromTiles :: DungeonTiles String -> Integer -> Integer -> List (List (TileNeighbors String))
-getNeighborsFromTiles = (tiles, x, y) => {
-  at = getTileAt(tiles)
-  return map(map(
-    transformTile(
-      (_, _, _) => ({
-        n:  at( x   ,  y - 1 ),
-        ne: at( x + 1, y - 1 ),
-        e:  at( x + 1, y     ),
-        se: at( x + 1, y + 1 ),
-        s:  at( x    , y + 1 ),
-        sw: at( x - 1, y + 1 ),
-        w:  at( x - 1, y     ),
-        nw: at( x - 1, y - 1 )
-      })
-    )
-  ))(tiles)
+getNeighborsForPosition :: DungeonTiles String -> Position -> TileNeighbors String
+export getNeighborsForPosition = (tiles, pos) => {
+  at = getTileAt($, tiles)
+  tile = at(pos)
+  return (
+    where (pos) {
+      #[x, y] =>
+        transformTile(
+          (_, _) => fromList([
+            #[ "n", at(#[  x   ,  y - 1 ]) ],
+            #[ "ne", at(#[ x + 1, y - 1 ]) ],
+            #[ "e", at(#[  x + 1, y     ]) ],
+            #[ "se", at(#[ x + 1, y + 1 ]) ],
+            #[ "s", at(#[  x    , y + 1 ]) ],
+            #[ "sw", at(#[ x - 1, y + 1 ]) ],
+            #[ "w", at(#[  x - 1, y     ]) ],
+            #[ "nw", at(#[ x - 1, y - 1 ]) ]
+          ])
+        )(tile)
+    }
+  )
 }
+
+getNeighborsForTile :: DungeonTiles String -> CartesianTile String -> TileNeighbors String
+export getNeighborsForTile = (tiles, tile) => pipe(
+  coord,
+  getNeighborsForPosition(tiles) 
+)(tile)

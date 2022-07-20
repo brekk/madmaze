@@ -1,11 +1,8 @@
-import IO from "IO"
-import {find, length} from "List"
-import {lt} from "Compare"
+import {find} from "List"
 import {Just, Nothing} from "Maybe"
 
-import type {Action, StandardAction, Actionable} from "@/Action"
+import type {StandardAction, Actionable} from "@/Action"
 import {InvalidAction, Command} from "@/Action"
-import type { Event } from "@/Event"
 
 export type Character name soul
   = Player(name, soul)

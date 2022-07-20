@@ -1,0 +1,73 @@
+import {test,assertEquals} from "Test"
+import {complement} from "Function"
+import IO from "IO"
+
+import {assertNotEqual} from "@/Test"
+import {makeTwister} from "@/Unusual"
+import {defaultConfig} from "@/Dungeon"
+import {
+  getBoundingBox,
+  roomContainsPosition,
+  roomIntersectsRoom,
+  makeRoom,
+  Room,
+  makeRooms,
+  maxStageProp
+} from "@/Room"
+
+coolroom = Room(#[10, 4], 5, 20, "coolroom")
+
+test("getBoundingBox", (_) => pipe(
+  getBoundingBox,
+  assertEquals({
+    top: 4,
+    bottom: 23,
+    left: 10,
+    right: 14
+  })
+)(coolroom))
+
+test("roomContainsPosition", (_) => pipe(
+  map(roomContainsPosition(coolroom)),
+  assertEquals([true, false, false, true])
+)([#[10,4], #[0, 0], #[-1, 30], #[14,23]]))
+
+shitroom = Room(#[2, 2], 2, 2, "shit")
+othercoolroom = Room(#[9, 3], 4, 5, "coolroom2")
+
+test("roomIntersectsRoom", (_) => pipe(
+  map(roomIntersectsRoom(coolroom)),
+  assertEquals([false, true])
+)([shitroom, othercoolroom]))
+
+unseeded = {
+  seed: "unseeded",
+  width: 17,
+  height: 13,
+  roomAttempts: 50,
+  roomConnectorChance: 50.0,
+  roomSizeModifier: 1,
+  walkWinding: 1 / 2
+}
+
+test("makeRoom", (_) => {
+  seed = "Room.mad"
+  u = makeTwister(seed)
+  conf = {...unseeded, seed}
+  IO.trace("CONF", conf)
+  a = makeRoom(u, conf, 10)
+  b = makeRoom(u, conf, 1)
+  return assertNotEqual(a, b)
+})
+
+test("maxStageProp", (_) => {
+  maxConnectorChance = maxStageProp(.roomAttempts)
+  connect = maxConnectorChance({
+    ...unseeded,
+    seed: "maxStageProp",
+  })
+  return pipe(
+    map(connect),
+    assertEquals($, [46, 1, 10])
+  )([100, -2, 10])
+})
