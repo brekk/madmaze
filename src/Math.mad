@@ -1,3 +1,6 @@
+round :: Float -> Integer
+export round = (x) => #- Math.round(x) -#
+
 floor :: Integer -> Integer
 export floor = (x) => #- Math.floor(x) -#
 

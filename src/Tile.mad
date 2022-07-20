@@ -1,8 +1,10 @@
 import type {Maybe} from "Maybe"
 import IO from "IO"
 import {Just, Nothing} from "Maybe"
-import {mapWithIndex, nth, find} from "List"
+import {find} from "List"
 import {always, when} from "Function"
+import {fromList} from "Dictionary"
+import {} from "String"
 
 export alias Position = #[Integer, Integer]
 
@@ -17,16 +19,7 @@ export alias CartesianTile a = Tile Position a
 
 export alias DungeonTiles t = List (CartesianTile t)
 
-export alias TileNeighbors a = {
-  n  :: CartesianTile a,
-  ne :: CartesianTile a,
-  e  :: CartesianTile a,
-  se :: CartesianTile a,
-  s  :: CartesianTile a,
-  sw :: CartesianTile a,
-  w  :: CartesianTile a,
-  nw :: CartesianTile a
-}
+export alias TileNeighbors a = Dictionary String (CartesianTile String)
 
 export alias BoundingBox = {
   top    :: Integer,
@@ -36,12 +29,13 @@ export alias BoundingBox = {
 }
 
 coord :: Tile Position a -> Position
-coord = pipe(
+export coord = pipe(
   where {
     Wall(pos, _) => pos 
     Floor(pos, _) => pos 
     Door(pos, _) => pos 
     Hazard(pos, _) => pos 
+    InvalidTile => #[-1,-1]
   }
 )
 
@@ -103,30 +97,30 @@ export transformTile = (fn, tile) => (
 )(tile)
 
 getNeighborsForPosition :: DungeonTiles String -> Position -> TileNeighbors String
-getNeighborsForPosition = (tiles, pos) => {
+export getNeighborsForPosition = (tiles, pos) => {
   at = getTileAt($, tiles)
   tile = at(pos)
   return (
     where (pos) {
       #[x, y] =>
         transformTile(
-          (_, _) => ({
-            n:  at( #[ x   ,  y - 1 ] ),
-            ne: at( #[ x + 1, y - 1 ] ),
-            e:  at( #[ x + 1, y     ] ),
-            se: at( #[ x + 1, y + 1 ] ),
-            s:  at( #[ x    , y + 1 ] ),
-            sw: at( #[ x - 1, y + 1 ] ),
-            w:  at( #[ x - 1, y     ] ),
-            nw: at( #[ x - 1, y - 1 ] )
-          })
+          (_, _) => fromList([
+            #[ "n", at(#[  x   ,  y - 1 ]) ],
+            #[ "ne", at(#[ x + 1, y - 1 ]) ],
+            #[ "e", at(#[  x + 1, y     ]) ],
+            #[ "se", at(#[ x + 1, y + 1 ]) ],
+            #[ "s", at(#[  x    , y + 1 ]) ],
+            #[ "sw", at(#[ x - 1, y + 1 ]) ],
+            #[ "w", at(#[  x - 1, y     ]) ],
+            #[ "nw", at(#[ x - 1, y - 1 ]) ]
+          ])
         )(tile)
     }
   )
 }
 
 getNeighborsForTile :: DungeonTiles String -> CartesianTile String -> TileNeighbors String
-getNeighborsForTile = (tiles, tile) => pipe(
+export getNeighborsForTile = (tiles, tile) => pipe(
   coord,
   getNeighborsForPosition(tiles) 
 )(tile)

@@ -1,48 +1,81 @@
 import IO from "IO"
-import { filter, append, length, reduce, find, nth, mapWithIndex, range} from "List"
+import { length, find, range, reduce,  filter} from "List"
 import {join, lastChar} from "String"
-import type {Maybe} from "Maybe"
 import {Just, Nothing} from "Maybe"
-import {identity, ifElse, equals, when, always} from "Function"
-import {formatDecimal, floatToInteger, integerToFloat} from "Number"
+import {ifElse, equals, always, any} from "Function"
+import {toList} from "Dictionary"
+import {snd} from "Tuple"
 
-import type {RecordSeededConfig, RecordConfig} from "@/Config"
+import {either} from "@/Function"
+
+import type {RecordSeededConfig } from "@/Config"
 import {drill} from "@/IO"
-import {abs, min, max, floor} from "@/Math"
 
 import type { StandardRoom, DungeonRooms, StandardRoom } from "@/Room"
-import {Room, makeRooms, roomIntersectsRoom, roomContainsPosition} from "@/Room"
+import {Room, makeRooms, roomContainsPosition} from "@/Room"
 
 import {toString} from "@/String"
 
-import type { Position, DungeonTiles, Tile, CartesianTile, TileNeighbors } from "@/Tile"
-import {transformTile, Door, Wall, Hazard, Floor, InvalidTile} from "@/Tile"
+import type { DungeonTiles, Position } from "@/Tile"
+import {transformTile, Wall, getNeighborsForPosition, coord } from "@/Tile"
 
-import type {Unusual} from "@/Unusual"
 import {makeTwister} from "@/Unusual"
 
 import {Vector} from "@/Vector"
 
 
 export type Dungeon width height rooms tiles = Dungeon(width, height, rooms, tiles)
+export alias CartesianDungeon = Dungeon Integer Integer (DungeonRooms String) (DungeonTiles String)
 
-// growMaze :: DungeonRooms String -> DungeonTiles String
-//          -> #[DungeonRooms String, DungeonTiles String]
-// growMaze = (rooms, tiles) => pipe(
-//   map(pipe(
-//     coord,
-//     (pos) => where (pos) {
-//       #[x, y] => 
-//     }
-//   ))
-// )(tiles)
+growMaze :: CartesianDungeon 
+         -> Position
+         -> CartesianDungeon
+export growMaze = (dungeon, origin) => (where (origin) {
+  #[xx, yy] => (
+    where (dungeon) {
+      Dungeon(w, h, rooms, tiles) => do {
+        return pipe(
+           map(
+              transformTile(
+                (pos, data) => (
+                  where (pos) {
+                    #[x, y] => do {
+                      neighbors = getNeighborsForPosition(tiles, pos)
+                      neighborIsFloor = pipe(
+                        map(
+                          (n) => any(
+                            roomContainsPosition($, coord(n))
+                          )(rooms)
+                        ),
+                        toList,
+                        reduce((a, b) => a && snd(b), true)
+                      )(neighbors)
+                      return pipe(
+                        find(
+                          either(
+                            roomContainsPosition($, pos),
+                            always(neighborIsFloor)
+                          )
+                        ),
+                        where {
+                          Just(_) => true
+                          Nothing => false
+                        },
+                        (inroom) => Wall(pos, data)
+                       )(rooms)
+                     }
+                  }
+                )
+              )
+            ),
+            (newTiles) => Dungeon(w, h, rooms, newTiles)
+          )(tiles)
+        }
+    }
+  )
+})
 
-// getNeighborMap :: DungeonTiles String -> List BoundingBox
-// getNeighborMap = map((tile) => getNeighborsFromTiles
-// )
-
-makeDungeonWithConfig :: RecordSeededConfig
-                      -> Dungeon Integer Integer (DungeonRooms String) (DungeonTiles String)
+makeDungeonWithConfig :: RecordSeededConfig -> CartesianDungeon
 makeDungeonWithConfig = (conf) => {
   seed = conf.seed
   u = makeTwister(seed)
@@ -80,9 +113,8 @@ makeDungeonWithConfig = (conf) => {
   */
   rooms = makeRooms(conf)
   // tiles = growMaze(rooms, gestalt)
-  
-  IO.trace("how many tiles?", length(gestalt))
-  drill("how many tiles inspectory?", length, gestalt)
+  // IO.trace("how many tiles?", length(gestalt))
+  // drill("how many tiles inspectory?", length, gestalt)
   state = {rooms, region: -1, tiles: gestalt}
   return Dungeon(
     width,
@@ -91,6 +123,7 @@ makeDungeonWithConfig = (conf) => {
     state.tiles
   )
 }
+
 
 defaultConfig :: RecordSeededConfig
 export defaultConfig = {
@@ -103,7 +136,7 @@ export defaultConfig = {
   walkWinding: 1 / 2
 }
 
-makeDungeonFromSeed :: String -> Dungeon Integer Integer (DungeonRooms String) (DungeonTiles String)
+makeDungeonFromSeed :: String -> CartesianDungeon 
 export makeDungeonFromSeed = (seed) => makeDungeonWithConfig({...defaultConfig, seed})
 
 roomSection :: StandardRoom String -> Integer -> String
@@ -133,11 +166,11 @@ lastDigitAsString = pipe(
   }
 )
 
-BLOCK_EDGE = "o"
-BLOCK_WALL = "#"
-BLOCK_ROOM = " "
+export BLOCK_EDGE = "X"
+export BLOCK_WALL = "#"
+export BLOCK_ROOM = " "
 
-renderDungeon :: Dungeon Integer Integer (DungeonRooms String) (DungeonTiles String) -> String
+renderDungeon :: CartesianDungeon -> String 
 export renderDungeon = (dungeon) => (
   where (dungeon) {
     Dungeon(w, h, rooms, tiles) => pipe(
