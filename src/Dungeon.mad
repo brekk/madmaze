@@ -2,7 +2,7 @@ import IO from "IO"
 import { length, find, range, reduce,  filter} from "List"
 import {join, lastChar} from "String"
 import {Just, Nothing} from "Maybe"
-import {ifElse, equals, always, any} from "Function"
+import {ifElse, equals, always, any, memoize} from "Function"
 import {toList} from "Dictionary"
 import {snd} from "Tuple"
 
@@ -27,6 +27,19 @@ import {Vector} from "@/Vector"
 export type Dungeon width height rooms tiles = Dungeon(width, height, rooms, tiles)
 export alias CartesianDungeon = Dungeon Integer Integer (DungeonRooms String) (DungeonTiles String)
 
+memoGetNeighborsForPosition = memoize(getNeighborsForPosition)
+memoRoomContainsPosition = memoize(roomContainsPosition)
+
+neighborsInRooms :: DungeonRooms String -> DungeonTiles String -> Position -> Boolean
+neighborsInRooms = (rooms, tiles, pos) => pipe(
+  memoGetNeighborsForPosition(tiles),
+  map((n) => any(
+    memoRoomContainsPosition($, coord(n))
+  )(rooms)),
+  toList,
+  reduce((a, b) => a && snd(b), true)
+)(pos)
+
 growMaze :: CartesianDungeon 
          -> Position
          -> CartesianDungeon
@@ -35,42 +48,31 @@ export growMaze = (dungeon, origin) => (where (origin) {
     where (dungeon) {
       Dungeon(w, h, rooms, tiles) => do {
         return pipe(
-           map(
-              transformTile(
-                (pos, data) => (
-                  where (pos) {
-                    #[x, y] => do {
-                      neighbors = getNeighborsForPosition(tiles, pos)
-                      neighborIsFloor = pipe(
-                        map(
-                          (n) => any(
-                            roomContainsPosition($, coord(n))
-                          )(rooms)
-                        ),
-                        toList,
-                        reduce((a, b) => a && snd(b), true)
-                      )(neighbors)
-                      return pipe(
-                        find(
-                          either(
-                            roomContainsPosition($, pos),
-                            always(neighborIsFloor)
-                          )
-                        ),
-                        where {
-                          Just(_) => true
-                          Nothing => false
-                        },
-                        (inroom) => Wall(pos, data)
-                       )(rooms)
-                     }
-                  }
-                )
-              )
-            ),
-            (newTiles) => Dungeon(w, h, rooms, newTiles)
-          )(tiles)
-        }
+          map(transformTile(
+            (pos, data) => (
+              where (pos) {
+                #[x, y] => do {
+                  anyNeighborIsInRoom = neighborsInRooms(rooms, tiles, pos) 
+                  return pipe(
+                    find(
+                      either(
+                        roomContainsPosition($, pos),
+                        always(anyNeighborIsInRoom)
+                      )
+                    ),
+                    where {
+                      Just(_) => true
+                      Nothing => false
+                    },
+                    (inroom) => Wall(pos, data)
+                  )(rooms)
+                }
+              }
+            )
+          )),
+          (newTiles) => Dungeon(w, h, rooms, newTiles)
+        )(tiles)
+      }
     }
   )
 })

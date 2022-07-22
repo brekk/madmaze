@@ -35,7 +35,7 @@ export coord = pipe(
     Floor(pos, _) => pos 
     Door(pos, _) => pos 
     Hazard(pos, _) => pos 
-    InvalidTile => #[-1,-1]
+    InvalidTile => #[Infinity,Infinity]
   }
 )
 
